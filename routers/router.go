@@ -9,8 +9,30 @@ import (
 // InitRoutes ..
 func InitRoutes(e *echo.Echo) {
 	userController := new(controllers.UserController)
-	e.GET("/users", userController.GetUsers)
-	e.GET("/user/:id", userController.GetUserByID)
-	e.POST("/user", userController.CreateUser)
-	e.DELETE("/user/:id", userController.DeleteUserByID)
+	productController := new(controllers.ProductController)
+	meatTypeController := new(controllers.MeatTypeController)
+	userRouter := e.Group("/user")
+	{
+		userRouter.GET("", userController.GetUsers)
+		userRouter.GET("/:id", userController.GetUserByID)
+		userRouter.POST("", userController.CreateUser)
+		userRouter.DELETE("/:id", userController.DeleteUserByID)
+	}
+
+	productRouter := e.Group("/product")
+	{
+		productRouter.GET("", productController.GetProducts)
+		productRouter.GET("/:id", productController.GetProductByID)
+		productRouter.POST("", productController.CreateProduct)
+		productRouter.DELETE("/:id", productController.DeleteProductByID)
+	}
+
+	meatTypeRouter := e.Group("/meat-type")
+	{
+		meatTypeRouter.GET("", meatTypeController.GetMeatTypes)
+		meatTypeRouter.GET("/:id", meatTypeController.GetMeatTypeByID)
+		meatTypeRouter.POST("", meatTypeController.CreateMeatType)
+		meatTypeRouter.DELETE("/:id", meatTypeController.DeleteMeatTypeByID)
+	}
+
 }
