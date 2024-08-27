@@ -16,6 +16,7 @@ func InitRoutes(e *echo.Echo) {
 		userRouter.GET("", userController.GetUsers)
 		userRouter.GET("/:id", userController.GetUserByID)
 		userRouter.POST("", userController.CreateUser)
+		userRouter.PUT("/:id", userController.UpdateUser)
 		userRouter.DELETE("/:id", userController.DeleteUserByID)
 	}
 
