@@ -1,11 +1,15 @@
 package controllers
 
 import (
-	"mookrata/database"
 	"mookrata/models"
+	"mookrata/req"
+	"mookrata/resp"
 	"net/http"
 
+	"github.com/kamva/mgm/v3"
+	"github.com/kamva/mgm/v3/operator"
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // UserController คือ struct สำหรับจัดการ request ที่เกี่ยวข้องกับผู้ใช้
@@ -15,14 +19,20 @@ type UserController struct{}
 func (u *UserController) GetUsers(c echo.Context) error {
 	var users []models.User
 
-	db := database.DB()
-	// Query เพื่อดึงข้อมูลผู้ใช้จากฐานข้อมูล
-	result := db.Find(&users)
-	if result.Error != nil {
-		if result.RowsAffected == 0 {
-			return c.String(http.StatusNotFound, "User not found")
-		}
-		return c.String(http.StatusInternalServerError, "Error: "+result.Error.Error())
+	var body req.GETUser
+
+	// ใช้ c.Bind เพื่อทำการแปลง JSON body เป็น struct
+	if err := c.Bind(&body); err != nil {
+		return c.JSONPretty(http.StatusBadRequest, resp.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid request body",
+		}, " ")
+	}
+
+	err := mgm.Coll(&models.User{}).SimpleFind(&users, bson.M{"full_name": bson.M{operator.Eq: body.FullName}})
+
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Error: "+err.Error())
 	}
 
 	// User found, return the data
@@ -34,15 +44,10 @@ func (u *UserController) GetUserByID(c echo.Context) error {
 	var user models.User
 	id := c.Param("id")
 
-	db := database.DB()
-	// Query เพื่อดึงข้อมูลผู้ใช้จากฐานข้อมูล
-	result := db.First(&user, id)
-	if result.Error != nil {
-		if result.RowsAffected == 0 {
-			return c.String(http.StatusNotFound, "User not found")
-		}
-		return c.String(http.StatusInternalServerError, "Error: "+result.Error.Error())
-	}
+	coll := mgm.Coll(&user)
+
+	// Find and decode the doc to a book model.
+	_ = coll.FindByID(id, &user)
 
 	// User found, return the data
 	return c.JSON(http.StatusOK, user)
@@ -53,22 +58,36 @@ func (u *UserController) CreateUser(c echo.Context) error {
 
 	var newUser models.User
 
+	// ทำการ bind JSON body ของ request เป็น struct
 	if err := c.Bind(&newUser); err != nil {
-		return c.String(http.StatusBadRequest, "Error: "+err.Error())
+		return c.JSON(http.StatusBadRequest, "Error: "+err.Error())
 	}
 
-	db := database.DB()
-
-	if err := db.Create(&newUser).Error; err != nil {
-		data := map[string]interface{}{
-			"message": err.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, data)
+	// แทรกข้อมูลลงใน MongoDB
+	err := mgm.Coll(&newUser).Create(&newUser)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Error: "+err.Error())
 	}
 
-	response := map[string]interface{}{
-		"data": newUser,
+	// ส่งคืนข้อมูลที่แทรกสำเร็จ
+	return c.JSON(http.StatusOK, newUser)
+}
+
+// DeleteUserByID ..
+func (u *UserController) DeleteUserByID(c echo.Context) error {
+	var user models.User
+	id := c.Param("id")
+
+	coll := mgm.Coll(&user)
+
+	// Find and decode the doc to a book model.
+	_ = coll.FindByID(id, &user)
+
+	err := mgm.Coll(&user).Delete(&user)
+	if err != nil {
+		panic(err)
 	}
 
-	return c.JSON(http.StatusOK, response)
+	// User found, return the data
+	return c.JSON(http.StatusOK, user)
 }

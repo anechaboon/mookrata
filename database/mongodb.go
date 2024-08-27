@@ -10,7 +10,7 @@ import (
 // InitMGM ..
 func InitMGM() {
 	// ตั้งค่า mgm เพื่อเชื่อมต่อกับ MongoDB
-	err := mgm.SetDefaultConfig(nil, "mydatabase", options.Client().ApplyURI("mongodb://localhost:27017"))
+	err := mgm.SetDefaultConfig(nil, "mookrata", options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		log.Fatal(err)
 	}
