@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"mookrata/models"
 	"mookrata/req"
 	"mookrata/resp"
@@ -10,6 +11,7 @@ import (
 	"github.com/kamva/mgm/v3/operator"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // UserController คือ struct สำหรับจัดการ request ที่เกี่ยวข้องกับผู้ใช้
@@ -63,8 +65,19 @@ func (u *UserController) CreateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Error: "+err.Error())
 	}
 
+	fmt.Printf("\n log:newUser.Password %v \n", newUser.Password)
+	password := []byte(newUser.Password)
+
+	// Hashing the password with the default cost of 10
+	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+
+	newUser.Password = string(hashedPassword)
+
 	// แทรกข้อมูลลงใน MongoDB
-	err := mgm.Coll(&newUser).Create(&newUser)
+	err = mgm.Coll(&newUser).Create(&newUser)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Error: "+err.Error())
 	}
