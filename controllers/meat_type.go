@@ -6,6 +6,7 @@ import (
 	"mookrata/resp"
 	"net/http"
 
+	"github.com/go-playground/validator"
 	"github.com/kamva/mgm/v3"
 	"github.com/kamva/mgm/v3/operator"
 	"github.com/labstack/echo/v4"
@@ -36,7 +37,12 @@ func (u *MeatTypeController) GetMeatTypes(c echo.Context) error {
 	}
 
 	// MeatType found, return the data
-	return c.JSON(http.StatusOK, meatTypes)
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: meatTypes,
+		},
+	}, " ")
 }
 
 // GetMeatTypeByID ..
@@ -50,7 +56,12 @@ func (u *MeatTypeController) GetMeatTypeByID(c echo.Context) error {
 	_ = coll.FindByID(id, &meatType)
 
 	// MeatType found, return the data
-	return c.JSON(http.StatusOK, meatType)
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: meatType,
+		},
+	}, " ")
 }
 
 // CreateMeatType ..
@@ -70,7 +81,63 @@ func (u *MeatTypeController) CreateMeatType(c echo.Context) error {
 	}
 
 	// ส่งคืนข้อมูลที่แทรกสำเร็จ
-	return c.JSON(http.StatusOK, newMeatType)
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: newMeatType,
+		},
+	}, " ")
+}
+
+// UpdateMeatType ..
+func (u *MeatTypeController) UpdateMeatType(c echo.Context) error {
+	id := c.Param("id")
+	existingMeatType := &models.MeatType{}
+
+	var body req.POSTMeatType
+
+	// ใช้ c.Bind เพื่อทำการแปลง JSON body เป็น struct
+	if err := c.Bind(&body); err != nil {
+		return c.JSONPretty(http.StatusBadRequest, resp.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid request body",
+		}, " ")
+	}
+
+	var validate = validator.New()
+
+	// ตรวจสอบ validation
+	if err := validate.Struct(&body); err != nil {
+		return c.JSONPretty(http.StatusBadRequest, resp.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Validation failed: " + err.Error(),
+		}, " ")
+	}
+
+	// ค้นหา MeatType ที่มี ID ตรงกับที่ให้มา
+	err := mgm.Coll(existingMeatType).FindByID(id, existingMeatType)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, "MeatType not found")
+	}
+
+	// อัปเดตข้อมูลใน existingMeatType ด้วยข้อมูลจาก body
+	existingMeatType.Name = body.Name
+	existingMeatType.Status = body.Status
+
+	// บันทึกการเปลี่ยนแปลงลงใน MongoDB
+	err = mgm.Coll(existingMeatType).Update(existingMeatType)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Error: "+err.Error())
+	}
+
+	// ส่งคืนข้อมูลที่อัปเดตสำเร็จ
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: existingMeatType,
+		},
+	}, " ")
+
 }
 
 // DeleteMeatTypeByID ..
@@ -89,5 +156,10 @@ func (u *MeatTypeController) DeleteMeatTypeByID(c echo.Context) error {
 	}
 
 	// MeatType found, return the data
-	return c.JSON(http.StatusOK, meatType)
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: meatType,
+		},
+	}, " ")
 }

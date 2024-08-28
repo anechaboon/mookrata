@@ -25,6 +25,7 @@ func InitRoutes(e *echo.Echo) {
 		productRouter.GET("", productController.GetProducts)
 		productRouter.GET("/:id", productController.GetProductByID)
 		productRouter.POST("", productController.CreateProduct)
+		productRouter.PUT("/:id", productController.UpdateProduct)
 		productRouter.DELETE("/:id", productController.DeleteProductByID)
 	}
 
@@ -33,6 +34,7 @@ func InitRoutes(e *echo.Echo) {
 		meatTypeRouter.GET("", meatTypeController.GetMeatTypes)
 		meatTypeRouter.GET("/:id", meatTypeController.GetMeatTypeByID)
 		meatTypeRouter.POST("", meatTypeController.CreateMeatType)
+		meatTypeRouter.PUT("/:id", meatTypeController.UpdateMeatType)
 		meatTypeRouter.DELETE("/:id", meatTypeController.DeleteMeatTypeByID)
 	}
 

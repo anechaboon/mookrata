@@ -44,7 +44,12 @@ func (u *UserController) GetUsers(c echo.Context) error {
 	}
 
 	// User found, return the data
-	return c.JSON(http.StatusOK, users)
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: users,
+		},
+	}, " ")
 }
 
 // GetUserByID ..
@@ -58,7 +63,12 @@ func (u *UserController) GetUserByID(c echo.Context) error {
 	_ = coll.FindByID(id, &user)
 
 	// User found, return the data
-	return c.JSON(http.StatusOK, user)
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: user,
+		},
+	}, " ")
 }
 
 // CreateUser ..
@@ -88,7 +98,12 @@ func (u *UserController) CreateUser(c echo.Context) error {
 	}
 
 	// ส่งคืนข้อมูลที่แทรกสำเร็จ
-	return c.JSON(http.StatusOK, newUser)
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: newUser,
+		},
+	}, " ")
 }
 
 // UpdateUser ..
@@ -146,7 +161,12 @@ func (u *UserController) UpdateUser(c echo.Context) error {
 	}
 
 	// ส่งคืนข้อมูลที่อัปเดตสำเร็จ
-	return c.JSON(http.StatusOK, existingUser)
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: existingUser,
+		},
+	}, " ")
 
 }
 
@@ -166,5 +186,10 @@ func (u *UserController) DeleteUserByID(c echo.Context) error {
 	}
 
 	// User found, return the data
-	return c.JSON(http.StatusOK, user)
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: user,
+		},
+	}, " ")
 }

@@ -6,6 +6,7 @@ import (
 	"mookrata/resp"
 	"net/http"
 
+	"github.com/go-playground/validator"
 	"github.com/kamva/mgm/v3"
 	"github.com/kamva/mgm/v3/operator"
 	"github.com/labstack/echo/v4"
@@ -29,14 +30,25 @@ func (u *ProductController) GetProducts(c echo.Context) error {
 		}, " ")
 	}
 
-	err := mgm.Coll(&models.Product{}).SimpleFind(&products, bson.M{"meat_type_id": bson.M{operator.Eq: body.MeatTypeID}})
+	var filter bson.M = bson.M{}
+
+	// ตรวจสอบว่า FullName มีค่าหรือไม่
+	if body.MeatTypeID != "" {
+		filter = bson.M{"meat_type_id": bson.M{operator.Eq: body.MeatTypeID}}
+	}
+	err := mgm.Coll(&models.Product{}).SimpleFind(&products, filter)
 
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Error: "+err.Error())
 	}
 
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: products,
+		},
+	}, " ")
 	// Product found, return the data
-	return c.JSON(http.StatusOK, products)
 }
 
 // GetProductByID ..
@@ -50,7 +62,12 @@ func (u *ProductController) GetProductByID(c echo.Context) error {
 	_ = coll.FindByID(id, &product)
 
 	// Product found, return the data
-	return c.JSON(http.StatusOK, product)
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: product,
+		},
+	}, " ")
 }
 
 // CreateProduct ..
@@ -70,7 +87,66 @@ func (u *ProductController) CreateProduct(c echo.Context) error {
 	}
 
 	// ส่งคืนข้อมูลที่แทรกสำเร็จ
-	return c.JSON(http.StatusOK, newProduct)
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: newProduct,
+		},
+	}, " ")
+}
+
+// UpdateProduct ..
+func (u *ProductController) UpdateProduct(c echo.Context) error {
+	id := c.Param("id")
+	existingProduct := &models.Product{}
+
+	var body req.POSTProduct
+
+	// ใช้ c.Bind เพื่อทำการแปลง JSON body เป็น struct
+	if err := c.Bind(&body); err != nil {
+		return c.JSONPretty(http.StatusBadRequest, resp.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid request body",
+		}, " ")
+	}
+
+	var validate = validator.New()
+
+	// ตรวจสอบ validation
+	if err := validate.Struct(&body); err != nil {
+		return c.JSONPretty(http.StatusBadRequest, resp.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Validation failed: " + err.Error(),
+		}, " ")
+	}
+
+	// ค้นหา Product ที่มี ID ตรงกับที่ให้มา
+	err := mgm.Coll(existingProduct).FindByID(id, existingProduct)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, "Product not found")
+	}
+
+	// อัปเดตข้อมูลใน existingProduct ด้วยข้อมูลจาก body
+	existingProduct.Name = body.Name
+	existingProduct.MeatTypeID = body.MeatTypeID
+	existingProduct.Weight = body.Weight
+	existingProduct.Price = body.Price
+	existingProduct.Status = body.Status
+
+	// บันทึกการเปลี่ยนแปลงลงใน MongoDB
+	err = mgm.Coll(existingProduct).Update(existingProduct)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Error: "+err.Error())
+	}
+
+	// ส่งคืนข้อมูลที่อัปเดตสำเร็จ
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: existingProduct,
+		},
+	}, " ")
+
 }
 
 // DeleteProductByID ..
@@ -89,5 +165,10 @@ func (u *ProductController) DeleteProductByID(c echo.Context) error {
 	}
 
 	// Product found, return the data
-	return c.JSON(http.StatusOK, product)
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: resp.SuccessResponse{
+			Data: product,
+		},
+	}, " ")
 }
