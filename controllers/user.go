@@ -10,6 +10,7 @@ import (
 	"github.com/kamva/mgm/v3"
 	"github.com/kamva/mgm/v3/operator"
 	"github.com/labstack/echo/v4"
+	"github.com/ulule/deepcopier"
 	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -75,12 +76,28 @@ func (u *UserController) GetUserByID(c echo.Context) error {
 // CreateUser ..
 func (u *UserController) CreateUser(c echo.Context) error {
 
+	var body req.POSTUser
 	var newUser models.User
 
-	// ทำการ bind JSON body ของ request เป็น struct
-	if err := c.Bind(&newUser); err != nil {
-		return c.JSON(http.StatusBadRequest, "Error: "+err.Error())
+	// ใช้ c.Bind เพื่อทำการแปลง JSON body เป็น struct
+	if err := c.Bind(&body); err != nil {
+		return c.JSONPretty(http.StatusBadRequest, resp.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid request body",
+		}, " ")
 	}
+
+	var validate = validator.New()
+
+	// ตรวจสอบ validation
+	if err := validate.Struct(&body); err != nil {
+		return c.JSONPretty(http.StatusBadRequest, resp.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Validation failed: " + err.Error(),
+		}, " ")
+	}
+
+	deepcopier.Copy(&newUser).From(&body)
 
 	password := []byte(newUser.Password)
 

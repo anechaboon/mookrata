@@ -11,6 +11,7 @@ import (
 	"github.com/kamva/mgm/v3"
 	"github.com/kamva/mgm/v3/operator"
 	"github.com/labstack/echo/v4"
+	"github.com/ulule/deepcopier"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -76,12 +77,28 @@ func (u *CustomerController) GetCustomerByID(c echo.Context) error {
 // CreateCustomer ..
 func (u *CustomerController) CreateCustomer(c echo.Context) error {
 
+	var body req.POSTCustomer
 	var newCustomer models.Customer
 
-	// ทำการ bind JSON body ของ request เป็น struct
-	if err := c.Bind(&newCustomer); err != nil {
-		return c.JSON(http.StatusBadRequest, "Error: "+err.Error())
+	// ใช้ c.Bind เพื่อทำการแปลง JSON body เป็น struct
+	if err := c.Bind(&body); err != nil {
+		return c.JSONPretty(http.StatusBadRequest, resp.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid request body",
+		}, " ")
 	}
+
+	var validate = validator.New()
+
+	// ตรวจสอบ validation
+	if err := validate.Struct(&body); err != nil {
+		return c.JSONPretty(http.StatusBadRequest, resp.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Validation failed: " + err.Error(),
+		}, " ")
+	}
+
+	deepcopier.Copy(&newCustomer).From(&body)
 
 	// แทรกข้อมูลลงใน MongoDB
 	err := mgm.Coll(&newCustomer).Create(&newCustomer)
