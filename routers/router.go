@@ -11,6 +11,8 @@ func InitRoutes(e *echo.Echo) {
 	userController := new(controllers.UserController)
 	productController := new(controllers.ProductController)
 	meatTypeController := new(controllers.MeatTypeController)
+	customerController := new(controllers.CustomerController)
+
 	userRouter := e.Group("/user")
 	{
 		userRouter.GET("", userController.GetUsers)
@@ -36,6 +38,15 @@ func InitRoutes(e *echo.Echo) {
 		meatTypeRouter.POST("", meatTypeController.CreateMeatType)
 		meatTypeRouter.PUT("/:id", meatTypeController.UpdateMeatType)
 		meatTypeRouter.DELETE("/:id", meatTypeController.DeleteMeatTypeByID)
+	}
+
+	customerRouter := e.Group("/customer")
+	{
+		customerRouter.GET("", customerController.GetCustomers)
+		customerRouter.GET("/:id", customerController.GetCustomerByID)
+		customerRouter.POST("", customerController.CreateCustomer)
+		customerRouter.PUT("/:id", customerController.UpdateCustomer)
+		customerRouter.DELETE("/:id", customerController.DeleteCustomerByID)
 	}
 
 }

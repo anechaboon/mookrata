@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"mookrata/models"
 	"mookrata/req"
 	"mookrata/resp"
@@ -11,17 +12,16 @@ import (
 	"github.com/kamva/mgm/v3/operator"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson"
-	"golang.org/x/crypto/bcrypt"
 )
 
-// UserController คือ struct สำหรับจัดการ request ที่เกี่ยวข้องกับผู้ใช้
-type UserController struct{}
+// CustomerController คือ struct สำหรับจัดการ request ที่เกี่ยวข้องกับผู้ใช้
+type CustomerController struct{}
 
-// GetUsers ..
-func (u *UserController) GetUsers(c echo.Context) error {
-	var users []models.User
+// GetCustomers ..
+func (u *CustomerController) GetCustomers(c echo.Context) error {
+	var customers []models.Customer
 
-	var body req.GETUser
+	var body req.GETCustomer
 
 	// ใช้ c.Bind เพื่อทำการแปลง JSON body เป็น struct
 	if err := c.Bind(&body); err != nil {
@@ -34,61 +34,51 @@ func (u *UserController) GetUsers(c echo.Context) error {
 	var filter bson.M = bson.M{}
 
 	// ตรวจสอบว่า FullName มีค่าหรือไม่
-	if body.FullName != "" {
-		filter = bson.M{"full_name": bson.M{operator.Eq: body.FullName}}
+	if body.Telephone != "" {
+		filter = bson.M{"telephone": bson.M{operator.Eq: body.Telephone}}
 	}
-	err := mgm.Coll(&models.User{}).SimpleFind(&users, filter)
+	err := mgm.Coll(&models.Customer{}).SimpleFind(&customers, filter)
 
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Error: "+err.Error())
 	}
 
-	// User found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: users,
+		Data: customers,
 	}, " ")
+	// Customer found, return the data
 }
 
-// GetUserByID ..
-func (u *UserController) GetUserByID(c echo.Context) error {
-	var user models.User
+// GetCustomerByID ..
+func (u *CustomerController) GetCustomerByID(c echo.Context) error {
+	var customer models.Customer
 	id := c.Param("id")
 
-	coll := mgm.Coll(&user)
+	coll := mgm.Coll(&customer)
 
 	// Find and decode the doc to a book model.
-	_ = coll.FindByID(id, &user)
+	_ = coll.FindByID(id, &customer)
 
-	// User found, return the data
+	// Customer found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: user,
+		Data: customer,
 	}, " ")
 }
 
-// CreateUser ..
-func (u *UserController) CreateUser(c echo.Context) error {
+// CreateCustomer ..
+func (u *CustomerController) CreateCustomer(c echo.Context) error {
 
-	var newUser models.User
+	var newCustomer models.Customer
 
 	// ทำการ bind JSON body ของ request เป็น struct
-	if err := c.Bind(&newUser); err != nil {
+	if err := c.Bind(&newCustomer); err != nil {
 		return c.JSON(http.StatusBadRequest, "Error: "+err.Error())
 	}
 
-	password := []byte(newUser.Password)
-
-	// Hashing the password with the default cost of 10
-	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
-	if err != nil {
-		panic(err)
-	}
-
-	newUser.Password = string(hashedPassword)
-
 	// แทรกข้อมูลลงใน MongoDB
-	err = mgm.Coll(&newUser).Create(&newUser)
+	err := mgm.Coll(&newCustomer).Create(&newCustomer)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Error: "+err.Error())
 	}
@@ -96,16 +86,16 @@ func (u *UserController) CreateUser(c echo.Context) error {
 	// ส่งคืนข้อมูลที่แทรกสำเร็จ
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: newUser,
+		Data: newCustomer,
 	}, " ")
 }
 
-// UpdateUser ..
-func (u *UserController) UpdateUser(c echo.Context) error {
+// UpdateCustomer ..
+func (u *CustomerController) UpdateCustomer(c echo.Context) error {
 	id := c.Param("id")
-	existingUser := &models.User{}
+	existingCustomer := &models.Customer{}
 
-	var body req.POSTUser
+	var body req.POSTCustomer
 
 	// ใช้ c.Bind เพื่อทำการแปลง JSON body เป็น struct
 	if err := c.Bind(&body); err != nil {
@@ -125,31 +115,21 @@ func (u *UserController) UpdateUser(c echo.Context) error {
 		}, " ")
 	}
 
-	// ค้นหา User ที่มี ID ตรงกับที่ให้มา
-	err := mgm.Coll(existingUser).FindByID(id, existingUser)
+	// ค้นหา Customer ที่มี ID ตรงกับที่ให้มา
+	err := mgm.Coll(existingCustomer).FindByID(id, existingCustomer)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, "User not found")
+		return c.JSON(http.StatusNotFound, "Customer not found")
 	}
 
-	password := []byte(body.Password)
-
-	// Hashing the password with the default cost of 10
-	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
-	if err != nil {
-		panic(err)
-	}
-	body.Password = string(hashedPassword)
-
-	// อัปเดตข้อมูลใน existingUser ด้วยข้อมูลจาก body
-	existingUser.FullName = body.FullName
-	existingUser.UserName = body.UserName
-	existingUser.Password = body.Password
-	existingUser.Telephone = body.Telephone
-	existingUser.Status = body.Status
-	existingUser.RoleID = body.RoleID
+	fmt.Printf("\n log:body %v \n", body)
+	// อัปเดตข้อมูลใน existingCustomer ด้วยข้อมูลจาก body
+	existingCustomer.Telephone = body.Telephone
+	existingCustomer.Count = body.Count
+	existingCustomer.Time = body.Time
+	existingCustomer.Status = body.Status
 
 	// บันทึกการเปลี่ยนแปลงลงใน MongoDB
-	err = mgm.Coll(existingUser).Update(existingUser)
+	err = mgm.Coll(existingCustomer).Update(existingCustomer)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Error: "+err.Error())
 	}
@@ -157,29 +137,29 @@ func (u *UserController) UpdateUser(c echo.Context) error {
 	// ส่งคืนข้อมูลที่อัปเดตสำเร็จ
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: existingUser,
+		Data: existingCustomer,
 	}, " ")
 
 }
 
-// DeleteUserByID ..
-func (u *UserController) DeleteUserByID(c echo.Context) error {
-	var user models.User
+// DeleteCustomerByID ..
+func (u *CustomerController) DeleteCustomerByID(c echo.Context) error {
+	var customer models.Customer
 	id := c.Param("id")
 
-	coll := mgm.Coll(&user)
+	coll := mgm.Coll(&customer)
 
 	// Find and decode the doc to a book model.
-	_ = coll.FindByID(id, &user)
+	_ = coll.FindByID(id, &customer)
 
-	err := mgm.Coll(&user).Delete(&user)
+	err := mgm.Coll(&customer).Delete(&customer)
 	if err != nil {
 		panic(err)
 	}
 
-	// User found, return the data
+	// Customer found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: user,
+		Data: customer,
 	}, " ")
 }

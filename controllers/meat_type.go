@@ -39,9 +39,7 @@ func (u *MeatTypeController) GetMeatTypes(c echo.Context) error {
 	// MeatType found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: resp.SuccessResponse{
-			Data: meatTypes,
-		},
+		Data: meatTypes,
 	}, " ")
 }
 
@@ -58,9 +56,7 @@ func (u *MeatTypeController) GetMeatTypeByID(c echo.Context) error {
 	// MeatType found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: resp.SuccessResponse{
-			Data: meatType,
-		},
+		Data: meatType,
 	}, " ")
 }
 
@@ -83,9 +79,7 @@ func (u *MeatTypeController) CreateMeatType(c echo.Context) error {
 	// ส่งคืนข้อมูลที่แทรกสำเร็จ
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: resp.SuccessResponse{
-			Data: newMeatType,
-		},
+		Data: newMeatType,
 	}, " ")
 }
 
@@ -133,9 +127,7 @@ func (u *MeatTypeController) UpdateMeatType(c echo.Context) error {
 	// ส่งคืนข้อมูลที่อัปเดตสำเร็จ
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: resp.SuccessResponse{
-			Data: existingMeatType,
-		},
+		Data: existingMeatType,
 	}, " ")
 
 }
@@ -158,8 +150,6 @@ func (u *MeatTypeController) DeleteMeatTypeByID(c echo.Context) error {
 	// MeatType found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: resp.SuccessResponse{
-			Data: meatType,
-		},
+		Data: meatType,
 	}, " ")
 }

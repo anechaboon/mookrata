@@ -44,9 +44,7 @@ func (u *ProductController) GetProducts(c echo.Context) error {
 
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: resp.SuccessResponse{
-			Data: products,
-		},
+		Data: products,
 	}, " ")
 	// Product found, return the data
 }
@@ -64,9 +62,7 @@ func (u *ProductController) GetProductByID(c echo.Context) error {
 	// Product found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: resp.SuccessResponse{
-			Data: product,
-		},
+		Data: product,
 	}, " ")
 }
 
@@ -89,9 +85,7 @@ func (u *ProductController) CreateProduct(c echo.Context) error {
 	// ส่งคืนข้อมูลที่แทรกสำเร็จ
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: resp.SuccessResponse{
-			Data: newProduct,
-		},
+		Data: newProduct,
 	}, " ")
 }
 
@@ -142,9 +136,7 @@ func (u *ProductController) UpdateProduct(c echo.Context) error {
 	// ส่งคืนข้อมูลที่อัปเดตสำเร็จ
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: resp.SuccessResponse{
-			Data: existingProduct,
-		},
+		Data: existingProduct,
 	}, " ")
 
 }
@@ -167,8 +159,6 @@ func (u *ProductController) DeleteProductByID(c echo.Context) error {
 	// Product found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: resp.SuccessResponse{
-			Data: product,
-		},
+		Data: product,
 	}, " ")
 }
