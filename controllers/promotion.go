@@ -57,8 +57,13 @@ func (u *PromotionController) GetPromotionByID(c echo.Context) error {
 	coll := mgm.Coll(&promotion)
 
 	// Find and decode the doc to a book model.
-	_ = coll.FindByID(id, &promotion)
-
+	err := coll.FindByID(id, &promotion)
+	if err != nil {
+		return c.JSONPretty(http.StatusOK, resp.ErrorResponse{
+			Code:    http.StatusOK,
+			Message: "Not Found Promotion",
+		}, " ")
+	}
 	// Promotion found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
@@ -149,9 +154,15 @@ func (u *PromotionController) DeletePromotionByID(c echo.Context) error {
 	coll := mgm.Coll(&promotion)
 
 	// Find and decode the doc to a book model.
-	_ = coll.FindByID(id, &promotion)
+	err := coll.FindByID(id, &promotion)
+	if err != nil {
+		return c.JSONPretty(http.StatusOK, resp.ErrorResponse{
+			Code:    http.StatusOK,
+			Message: "Not Found Promotion",
+		}, " ")
+	}
 
-	err := mgm.Coll(&promotion).Delete(&promotion)
+	err = mgm.Coll(&promotion).Delete(&promotion)
 	if err != nil {
 		panic(err)
 	}

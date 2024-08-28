@@ -51,8 +51,13 @@ func (u *MeatTypeController) GetMeatTypeByID(c echo.Context) error {
 	coll := mgm.Coll(&meatType)
 
 	// Find and decode the doc to a book model.
-	_ = coll.FindByID(id, &meatType)
-
+	err := coll.FindByID(id, &meatType)
+	if err != nil {
+		return c.JSONPretty(http.StatusOK, resp.ErrorResponse{
+			Code:    http.StatusOK,
+			Message: "Not Found Meat Type",
+		}, " ")
+	}
 	// MeatType found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
@@ -140,9 +145,15 @@ func (u *MeatTypeController) DeleteMeatTypeByID(c echo.Context) error {
 	coll := mgm.Coll(&meatType)
 
 	// Find and decode the doc to a book model.
-	_ = coll.FindByID(id, &meatType)
+	err := coll.FindByID(id, &meatType)
+	if err != nil {
+		return c.JSONPretty(http.StatusOK, resp.ErrorResponse{
+			Code:    http.StatusOK,
+			Message: "Not Found Meat Type",
+		}, " ")
+	}
 
-	err := mgm.Coll(&meatType).Delete(&meatType)
+	err = mgm.Coll(&meatType).Delete(&meatType)
 	if err != nil {
 		panic(err)
 	}

@@ -57,8 +57,13 @@ func (u *ProductController) GetProductByID(c echo.Context) error {
 	coll := mgm.Coll(&product)
 
 	// Find and decode the doc to a book model.
-	_ = coll.FindByID(id, &product)
-
+	err := coll.FindByID(id, &product)
+	if err != nil {
+		return c.JSONPretty(http.StatusOK, resp.ErrorResponse{
+			Code:    http.StatusOK,
+			Message: "Not Found Product",
+		}, " ")
+	}
 	// Product found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
@@ -149,9 +154,15 @@ func (u *ProductController) DeleteProductByID(c echo.Context) error {
 	coll := mgm.Coll(&product)
 
 	// Find and decode the doc to a book model.
-	_ = coll.FindByID(id, &product)
+	err := coll.FindByID(id, &product)
+	if err != nil {
+		return c.JSONPretty(http.StatusOK, resp.ErrorResponse{
+			Code:    http.StatusOK,
+			Message: "Not Found Product",
+		}, " ")
+	}
 
-	err := mgm.Coll(&product).Delete(&product)
+	err = mgm.Coll(&product).Delete(&product)
 	if err != nil {
 		panic(err)
 	}

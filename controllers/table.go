@@ -10,18 +10,18 @@ import (
 	"github.com/kamva/mgm/v3"
 	"github.com/kamva/mgm/v3/operator"
 	"github.com/labstack/echo/v4"
+	"github.com/ulule/deepcopier"
 	"go.mongodb.org/mongo-driver/bson"
-	"golang.org/x/crypto/bcrypt"
 )
 
-// UserController คือ struct สำหรับจัดการ request ที่เกี่ยวข้องกับผู้ใช้
-type UserController struct{}
+// TableController คือ struct สำหรับจัดการ request ที่เกี่ยวข้องกับผู้ใช้
+type TableController struct{}
 
-// GetUsers ..
-func (u *UserController) GetUsers(c echo.Context) error {
-	var users []models.User
+// GetTables ..
+func (u *TableController) GetTables(c echo.Context) error {
+	var tables []models.Table
 
-	var body req.GETUser
+	var body req.GETTable
 
 	// ใช้ c.Bind เพื่อทำการแปลง JSON body เป็น struct
 	if err := c.Bind(&body); err != nil {
@@ -34,83 +34,51 @@ func (u *UserController) GetUsers(c echo.Context) error {
 	var filter bson.M = bson.M{}
 
 	// ตรวจสอบว่า FullName มีค่าหรือไม่
-	if body.FullName != "" {
-		filter = bson.M{"full_name": bson.M{operator.Eq: body.FullName}}
+	if body.CustomerID != "" {
+		filter = bson.M{"customer_id": bson.M{operator.Eq: body.CustomerID}}
 	}
-	err := mgm.Coll(&models.User{}).SimpleFind(&users, filter)
+	if body.Bill != "" {
+		filter = bson.M{"bill": bson.M{operator.Eq: body.Bill}}
+	}
+	err := mgm.Coll(&models.Table{}).SimpleFind(&tables, filter)
 
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Error: "+err.Error())
 	}
 
-	// User found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: users,
+		Data: tables,
 	}, " ")
+	// Table found, return the data
 }
 
-// GetUserByID ..
-func (u *UserController) GetUserByID(c echo.Context) error {
-	var user models.User
+// GetTableByID ..
+func (u *TableController) GetTableByID(c echo.Context) error {
+	var table models.Table
 	id := c.Param("id")
+	coll := mgm.Coll(&table)
 
-	coll := mgm.Coll(&user)
-
-	// Find and decode the doc to a book model.
-	err := coll.FindByID(id, &user)
+	err := coll.FindByID(id, &table)
 	if err != nil {
 		return c.JSONPretty(http.StatusOK, resp.ErrorResponse{
 			Code:    http.StatusOK,
-			Message: "Not Found User",
+			Message: "Not Found Table",
 		}, " ")
 	}
-	// User found, return the data
+
+	// Table found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: user,
+		Data: table,
 	}, " ")
 }
 
-// CreateUser ..
-func (u *UserController) CreateUser(c echo.Context) error {
+// CreateTable ..
+func (u *TableController) CreateTable(c echo.Context) error {
 
-	var newUser models.User
-
-	// ทำการ bind JSON body ของ request เป็น struct
-	if err := c.Bind(&newUser); err != nil {
-		return c.JSON(http.StatusBadRequest, "Error: "+err.Error())
-	}
-
-	password := []byte(newUser.Password)
-
-	// Hashing the password with the default cost of 10
-	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
-	if err != nil {
-		panic(err)
-	}
-
-	newUser.Password = string(hashedPassword)
-
-	// แทรกข้อมูลลงใน MongoDB
-	err = mgm.Coll(&newUser).Create(&newUser)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Error: "+err.Error())
-	}
-
-	// ส่งคืนข้อมูลที่แทรกสำเร็จ
-	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
-		Code: http.StatusOK,
-		Data: newUser,
-	}, " ")
-}
-
-// UpdateUser ..
-func (u *UserController) UpdateUser(c echo.Context) error {
-	id := c.Param("id")
-	existingUser := &models.User{}
-
-	var body req.POSTUser
+	var body req.POSTTable
+	var newTable models.Table
 
 	// ใช้ c.Bind เพื่อทำการแปลง JSON body เป็น struct
 	if err := c.Bind(&body); err != nil {
@@ -130,31 +98,59 @@ func (u *UserController) UpdateUser(c echo.Context) error {
 		}, " ")
 	}
 
-	// ค้นหา User ที่มี ID ตรงกับที่ให้มา
-	err := mgm.Coll(existingUser).FindByID(id, existingUser)
+	deepcopier.Copy(&newTable).From(&body)
+
+	// แทรกข้อมูลลงใน MongoDB
+	err := mgm.Coll(&newTable).Create(&newTable)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, "User not found")
+		return c.JSON(http.StatusInternalServerError, "Error: "+err.Error())
 	}
 
-	password := []byte(body.Password)
+	// ส่งคืนข้อมูลที่แทรกสำเร็จ
+	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
+		Code: http.StatusOK,
+		Data: newTable,
+	}, " ")
+}
 
-	// Hashing the password with the default cost of 10
-	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
-	if err != nil {
-		panic(err)
+// UpdateTable ..
+func (u *TableController) UpdateTable(c echo.Context) error {
+	id := c.Param("id")
+	existingTable := &models.Table{}
+
+	var body req.POSTTable
+
+	// ใช้ c.Bind เพื่อทำการแปลง JSON body เป็น struct
+	if err := c.Bind(&body); err != nil {
+		return c.JSONPretty(http.StatusBadRequest, resp.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid request body",
+		}, " ")
 	}
-	body.Password = string(hashedPassword)
 
-	// อัปเดตข้อมูลใน existingUser ด้วยข้อมูลจาก body
-	existingUser.FullName = body.FullName
-	existingUser.UserName = body.UserName
-	existingUser.Password = body.Password
-	existingUser.Telephone = body.Telephone
-	existingUser.Status = body.Status
-	existingUser.RoleID = body.RoleID
+	var validate = validator.New()
+
+	// ตรวจสอบ validation
+	if err := validate.Struct(&body); err != nil {
+		return c.JSONPretty(http.StatusBadRequest, resp.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Validation failed: " + err.Error(),
+		}, " ")
+	}
+
+	// ค้นหา Table ที่มี ID ตรงกับที่ให้มา
+	err := mgm.Coll(existingTable).FindByID(id, existingTable)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, "Table not found")
+	}
+
+	// อัปเดตข้อมูลใน existingTable ด้วยข้อมูลจาก body
+	existingTable.CustomerID = body.CustomerID
+	existingTable.Bill = body.Bill
+	existingTable.Status = body.Status
 
 	// บันทึกการเปลี่ยนแปลงลงใน MongoDB
-	err = mgm.Coll(existingUser).Update(existingUser)
+	err = mgm.Coll(existingTable).Update(existingTable)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Error: "+err.Error())
 	}
@@ -162,35 +158,35 @@ func (u *UserController) UpdateUser(c echo.Context) error {
 	// ส่งคืนข้อมูลที่อัปเดตสำเร็จ
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: existingUser,
+		Data: existingTable,
 	}, " ")
 
 }
 
-// DeleteUserByID ..
-func (u *UserController) DeleteUserByID(c echo.Context) error {
-	var user models.User
+// DeleteTableByID ..
+func (u *TableController) DeleteTableByID(c echo.Context) error {
+	var table models.Table
 	id := c.Param("id")
 
-	coll := mgm.Coll(&user)
+	coll := mgm.Coll(&table)
 
 	// Find and decode the doc to a book model.
-	err := coll.FindByID(id, &user)
+	err := coll.FindByID(id, &table)
 	if err != nil {
 		return c.JSONPretty(http.StatusOK, resp.ErrorResponse{
 			Code:    http.StatusOK,
-			Message: "Not Found User",
+			Message: "Not Found Table",
 		}, " ")
 	}
 
-	err = mgm.Coll(&user).Delete(&user)
+	err = mgm.Coll(&table).Delete(&table)
 	if err != nil {
 		panic(err)
 	}
 
-	// User found, return the data
+	// Table found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
 		Code: http.StatusOK,
-		Data: user,
+		Data: table,
 	}, " ")
 }

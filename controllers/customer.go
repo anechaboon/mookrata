@@ -58,7 +58,13 @@ func (u *CustomerController) GetCustomerByID(c echo.Context) error {
 	coll := mgm.Coll(&customer)
 
 	// Find and decode the doc to a book model.
-	_ = coll.FindByID(id, &customer)
+	err := coll.FindByID(id, &customer)
+	if err != nil {
+		return c.JSONPretty(http.StatusOK, resp.ErrorResponse{
+			Code:    http.StatusOK,
+			Message: "Not Found Customer",
+		}, " ")
+	}
 
 	// Customer found, return the data
 	return c.JSONPretty(http.StatusOK, resp.SuccessResponse{
@@ -150,9 +156,15 @@ func (u *CustomerController) DeleteCustomerByID(c echo.Context) error {
 	coll := mgm.Coll(&customer)
 
 	// Find and decode the doc to a book model.
-	_ = coll.FindByID(id, &customer)
+	err := coll.FindByID(id, &customer)
+	if err != nil {
+		return c.JSONPretty(http.StatusOK, resp.ErrorResponse{
+			Code:    http.StatusOK,
+			Message: "Not Found Customer",
+		}, " ")
+	}
 
-	err := mgm.Coll(&customer).Delete(&customer)
+	err = mgm.Coll(&customer).Delete(&customer)
 	if err != nil {
 		panic(err)
 	}
