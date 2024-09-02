@@ -12,7 +12,8 @@ func InitRoutes(e *echo.Echo) {
 	productController := new(controllers.ProductController)
 	meatTypeController := new(controllers.MeatTypeController)
 	customerController := new(controllers.CustomerController)
-	promotionController := new(controllers.PromotionController)
+	PromotionController := new(controllers.PromotionController)
+	usePromotionController := new(controllers.UsePromotionController)
 	tableController := new(controllers.TableController)
 	orderDetailController := new(controllers.OrderDetailController)
 
@@ -52,13 +53,22 @@ func InitRoutes(e *echo.Echo) {
 		customerRouter.DELETE("/:id", customerController.DeleteCustomerByID)
 	}
 
-	promotionRouter := e.Group("/promotion")
+	PromotionRouter := e.Group("/promotion")
 	{
-		promotionRouter.GET("", promotionController.GetPromotions)
-		promotionRouter.GET("/:id", promotionController.GetPromotionByID)
-		promotionRouter.POST("", promotionController.CreatePromotion)
-		promotionRouter.PUT("/:id", promotionController.UpdatePromotion)
-		promotionRouter.DELETE("/:id", promotionController.DeletePromotionByID)
+		PromotionRouter.GET("", PromotionController.GetPromotions)
+		PromotionRouter.GET("/:id", PromotionController.GetPromotionByID)
+		PromotionRouter.POST("", PromotionController.CreatePromotion)
+		PromotionRouter.PUT("/:id", PromotionController.UpdatePromotion)
+		PromotionRouter.DELETE("/:id", PromotionController.DeletePromotionByID)
+	}
+
+	usePromotionRouter := e.Group("/use-promotion")
+	{
+		usePromotionRouter.GET("", usePromotionController.GetUsePromotions)
+		usePromotionRouter.GET("/:id", usePromotionController.GetUsePromotionByID)
+		usePromotionRouter.POST("", usePromotionController.CreateUsePromotion)
+		usePromotionRouter.PUT("/:id", usePromotionController.UpdateUsePromotion)
+		usePromotionRouter.DELETE("/:id", usePromotionController.DeleteUsePromotionByID)
 	}
 
 	tableRouter := e.Group("/table")
